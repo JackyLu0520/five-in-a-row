@@ -15,6 +15,10 @@ button_start1=pygame.image.load(os.path.join("buttons","startgame_1.png"))
 sign=pygame.image.load(os.path.join("chessman","sign.png"))#30x30
 chessman_black=pygame.image.load(os.path.join("chessman","black.png"))#30x30
 chessman_white=pygame.image.load(os.path.join("chessman","white.png"))#30x30
+chessman_black_2x=pygame.transform.smoothscale_by(chessman_black,2)
+chessman_white_2x=pygame.transform.smoothscale_by(chessman_white,2)
+black_win=pygame.image.load(os.path.join("win","black_win.png"))#760x650
+white_win=pygame.image.load(os.path.join("win","white_win.png"))
 #pygame init
 pygame.init()
 screen=pygame.display.set_mode((760,650))
@@ -32,7 +36,7 @@ map=[[-1]*19 for i in range(19)]#-1:empty 0:black 1:white
 def inrect(spot,rect):
     return spot[0]>rect[0] and spot[1]>rect[1] and \
     spot[0]<rect[0]+rect[2] and spot[1]<rect[1]+rect[3]
-def rpos2pos(rpos):
+def rpos2pos(rpos):#rpos:real mouse position;pos:block position
     return ((rpos[0]-block_info[0])//block_info[2],\
             (rpos[1]-block_info[1])//block_info[3])
 def pos2rpos(pos):
@@ -60,24 +64,30 @@ def start():
             screen.blit(button_start0,start_button_rect[0:2])
         #update
         pygame.display.update()
-
+def check_win(pos):#-1:? 0:black 1:white
+    dirs=[[-1,0],[0,-1],[-1,-1],[-1,1]]
+    side=map[pos[0]][pos[1]]#0:black 1:white
+    for dir in dirs:
+        tp=list(pos)
+        while map[tp[0]+dir[0]][tp[1]+dir[1]]==side and inrect(tp,(-1,-1,20,20)):
+            tp[0]+=dir[0]
+            tp[1]+=dir[1]
+        f=True
+        for i in range(5):
+            if not inrect(tp,(-1,-1,20,20)):
+                f=False
+                break
+            if map[tp[0]][tp[1]]!=side:
+                f=False
+            tp[0]-=dir[0]
+            tp[1]-=dir[1]
+        if f:
+            return side
+    return -1
 def main():#unfinished
     show_lines=False
     mode=0#0:black 1:white
     while 1:
-        #display
-        screen.blit(bg_game,(0,0))
-        if show_lines:
-            for i in range(20):
-                pygame.draw.line(screen,color_red,pos2rpos((i,0)),pos2rpos((i,19)),1)
-            for i in range(20):
-                pygame.draw.line(screen,color_red,pos2rpos((0,i)),pos2rpos((19,i)),1)
-        for i in range(19):
-            for j in range(19):
-                if map[i][j]==0:
-                    screen.blit(chessman_black,pos2rpos((i,j)))
-                elif map[i][j]==1:
-                    screen.blit(chessman_white,pos2rpos((i,j)))
         #event
         mousedown=0
         for event in pygame.event.get():
@@ -92,19 +102,54 @@ def main():#unfinished
         rpos=pygame.mouse.get_pos()
         pos=rpos2pos(rpos)
         if inrect(pos,(-1,-1,20,20)) and map[pos[0]][pos[1]]==-1:
-            print(pos)
-            screen.blit(sign,pos2rpos(pos))
+            #print(pos)
             if mousedown:
                 if mode:
                     map[pos[0]][pos[1]]=1
                 else:
                     map[pos[0]][pos[1]]=0
                 mode=not mode
+        #display
+        screen.blit(bg_game,(0,0))#bg
+        if inrect(pos,(-1,-1,20,20)) and map[pos[0]][pos[1]]==-1:#sign
+            screen.blit(sign,pos2rpos(pos))
+        if show_lines:#lines
+            for i in range(20):
+                pygame.draw.line(screen,color_red,pos2rpos((i,0)),pos2rpos((i,19)),1)
+            for i in range(20):
+                pygame.draw.line(screen,color_red,pos2rpos((0,i)),pos2rpos((19,i)),1)
+        for i in range(19):#chessman
+            for j in range(19):
+                if map[i][j]==0:
+                    screen.blit(chessman_black,pos2rpos((i,j)))
+                elif map[i][j]==1:
+                    screen.blit(chessman_white,pos2rpos((i,j)))
+        screen.blit(chessman_white_2x if mode else chessman_black_2x,(660,50))#mode
         #update
         pygame.display.update()
-    
+        #check
+        if inrect(pos,(-1,-1,20,20)) and mousedown:
+            c=check_win(pos)
+            if c!=-1:
+                return c
+def show_win(result):
+    print("show_win")
+    #display
+    old_screen=screen.copy()
+    screen.blit(old_screen,(0,0))
+    screen.blit(white_win if result else black_win,(50,50))
+    #update
+    pygame.display.update()
+    #event
+    while 1:
+        for event in pygame.event.get():
+            if event.type==QUIT:
+                pygame.quit()
+                exit()
 
+#run
 start()
-main()
-
+result=main()
+#print(result)
+show_win(result)
 pygame.quit()
