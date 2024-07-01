@@ -12,6 +12,8 @@ bg_start=pygame.image.load(os.path.join("bg","bg_start.png"))#760x650
 bg_game=pygame.image.load(os.path.join("bg","bg_game.png"))
 button_start0=pygame.image.load(os.path.join("buttons","startgame_0.png"))#95x45
 button_start1=pygame.image.load(os.path.join("buttons","startgame_1.png"))
+button_home0=pygame.image.load(os.path.join("buttons","home_0.png"))#60x60
+button_home1=pygame.image.load(os.path.join("buttons","home_1.png"))
 sign=pygame.image.load(os.path.join("chessman","sign.png"))#30x30
 chessman_black=pygame.image.load(os.path.join("chessman","black.png"))#30x30
 chessman_white=pygame.image.load(os.path.join("chessman","white.png"))#30x30
@@ -29,9 +31,8 @@ color_black=(0,0,0)
 color_red=(255,0,0)
 #constants
 start_button_rect=(75,450,95,45)#start_x,start_y,size_x,size_y
+home_button_rect=(660,550,60,60)
 block_info=(34,35,30,30)#start_x,start_y,size_x,size_y
-#variables(global)
-map=[[-1]*19 for i in range(19)]#-1:empty 0:black 1:white
 #utilities
 def inrect(spot,rect):
     return spot[0]>rect[0] and spot[1]>rect[1] and \
@@ -69,7 +70,7 @@ def check_win(pos):#-1:? 0:black 1:white
     side=map[pos[0]][pos[1]]#0:black 1:white
     for dir in dirs:
         tp=list(pos)
-        while map[tp[0]+dir[0]][tp[1]+dir[1]]==side and inrect(tp,(-1,-1,20,20)):
+        while inrect([tp[0]+dir[0],tp[1]+dir[1]],(-1,-1,20,20)) and map[tp[0]+dir[0]][tp[1]+dir[1]]==side:
             tp[0]+=dir[0]
             tp[1]+=dir[1]
         f=True
@@ -137,19 +138,37 @@ def show_win(result):
     #display
     old_screen=screen.copy()
     screen.blit(old_screen,(0,0))
-    screen.blit(white_win if result else black_win,(50,50))
     #update
     pygame.display.update()
     #event
     while 1:
+        mousedown=0
+        #display
+        screen.blit(old_screen,(0,0))
+        screen.blit(white_win if result else black_win,(50,50))
+        #event
         for event in pygame.event.get():
             if event.type==QUIT:
                 pygame.quit()
                 exit()
+            elif event.type==MOUSEBUTTONDOWN:
+                mousedown=1
+        spot=pygame.mouse.get_pos()
+        if inrect(spot,home_button_rect):
+            screen.blit(button_home1,home_button_rect[0:2])
+            if mousedown:
+                return
+        else:
+            screen.blit(button_home0,home_button_rect[0:2])
+        #update
+        pygame.display.update()
 
-#run
-start()
-result=main()
-#print(result)
-show_win(result)
+#loop
+while 1:
+    #variables(global)
+    map=[[-1]*19 for i in range(19)]#-1:empty 0:black 1:white
+    start()
+    result=main()
+    #print(result)
+    show_win(result)
 pygame.quit()
