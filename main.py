@@ -85,7 +85,7 @@ def check_win(pos):#-1:? 0:black 1:white
         if f:
             return side
     return -1
-def main():#unfinished
+def main():
     show_lines=False
     mode=0#0:black 1:white
     while 1:
